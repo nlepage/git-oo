@@ -10,6 +10,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+const logsDirName = "logs"
+
 type Watcher struct {
 	fswatcher *fsnotify.Watcher
 	entries   chan *Entry
@@ -29,7 +31,7 @@ func NewWatcher(gitDir string) (*Watcher, error) {
 		fswatcher: fswatcher,
 		entries:   entries,
 		lastLine:  make(map[string]string),
-		logsDir:   filepath.Join(gitDir, "logs"),
+		logsDir:   filepath.Join(gitDir, logsDirName),
 	}
 
 	if err := w.addDir(w.logsDir, false); err != nil {
