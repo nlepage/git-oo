@@ -24,62 +24,62 @@ type Author struct {
 	Email string
 }
 
-func parseEntry(reference string, s string) (*Entry, error) {
+func (e *Entry) Parse(s string) error {
 	r := bufio.NewReader(strings.NewReader(s))
 
 	s, err := r.ReadString(' ')
 	if err != nil {
-		return nil, err
+		return err
 	}
 	oldHash := s[:len(s)-1]
 
 	s, err = r.ReadString(' ')
 	if err != nil {
-		return nil, err
+		return err
 	}
 	newHash := s[:len(s)-1]
 
 	s, err = r.ReadString('<')
 	if err != nil {
-		return nil, err
+		return err
 	}
 	name := s[:len(s)-2]
 
 	s, err = r.ReadString('>')
 	if err != nil {
-		return nil, err
+		return err
 	}
 	email := s[:len(s)-1]
 
 	_, err = r.Discard(1)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	s, err = r.ReadString(' ')
 	if err != nil {
-		return nil, err
+		return err
 	}
 	ts, err := strconv.ParseInt(s[:len(s)-1], 10, 64)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	when := time.Unix(ts, 0)
 
 	s, err = r.ReadString('\t')
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 	t, err := time.Parse("2006-01-02 15:04:05 -0700", "0000-01-01 00:00:00 "+s[:len(s)-1])
 	if err != nil {
-		return nil, err
+		return err
 	}
 	when = when.In(t.Location())
 
 	s, err = r.ReadString(':')
 	if err != nil {
-		return nil, err
+		return err
 	}
 	action := s[:len(s)-1]
 	modifier := ""
@@ -91,21 +91,18 @@ func parseEntry(reference string, s string) (*Entry, error) {
 
 	s, err = r.ReadString('\n')
 	if err != nil && err != io.EOF {
-		return nil, err
+		return err
 	}
 	message := s[1:]
 
-	return &Entry{
-		Reference: reference,
-		OldHash:   oldHash,
-		NewHash:   newHash,
-		Author: Author{
-			Name:  name,
-			Email: email,
-		},
-		Time:     when,
-		Action:   action,
-		Modifier: modifier,
-		Message:  message,
-	}, nil
+	e.OldHash, e.NewHash = oldHash, newHash
+	e.Author = Author{
+		Name:  name,
+		Email: email,
+	}
+	e.Time = when
+	e.Action, e.Modifier = action, modifier
+	e.Message = message
+
+	return nil
 }

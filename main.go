@@ -9,7 +9,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/urfave/cli/v2"
 
-	"github.com/nlepage/goo/reflog"
+	"github.com/nlepage/goo/reflog/watcher"
 )
 
 var app = &cli.App{
@@ -21,7 +21,7 @@ var app = &cli.App{
 			return err
 		}
 
-		watcher, err := reflog.NewWatcher(filepath.Join(path, git.GitDirName))
+		watcher, err := watcher.New(filepath.Join(path, git.GitDirName))
 		if err != nil {
 			log.Fatalln(err)
 		}

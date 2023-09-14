@@ -1,4 +1,4 @@
-package reflog
+package watcher
 
 import (
 	"bufio"
@@ -8,24 +8,25 @@ import (
 	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/nlepage/goo/reflog"
 )
 
 const logsDirName = "logs"
 
 type Watcher struct {
 	fswatcher *fsnotify.Watcher
-	entries   chan *Entry
+	entries   chan *reflog.Entry
 	lastLine  map[string]string
 	logsDir   string
 }
 
-func NewWatcher(gitDir string) (*Watcher, error) {
+func New(gitDir string) (*Watcher, error) {
 	fswatcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
 
-	entries := make(chan *Entry)
+	entries := make(chan *reflog.Entry)
 
 	w := &Watcher{
 		fswatcher: fswatcher,
@@ -43,7 +44,7 @@ func NewWatcher(gitDir string) (*Watcher, error) {
 	return w, nil
 }
 
-func (w *Watcher) Entries() <-chan *Entry {
+func (w *Watcher) Entries() <-chan *reflog.Entry {
 	return w.entries
 }
 
@@ -105,8 +106,8 @@ func (w *Watcher) readLastLines(file string, sendEntries bool) error {
 		}
 
 		for _, line := range lines[prevIndex+1:] {
-			entry, err := parseEntry(reference, line)
-			if err != nil {
+			entry := &reflog.Entry{Reference: reference}
+			if err := entry.Parse(line); err != nil {
 				return err
 			}
 			w.entries <- entry
