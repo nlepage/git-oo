@@ -1,4 +1,4 @@
-module github.com/nlepage/gitoo
+module github.com/nlepage/goo
 
 go 1.20
 

@@ -9,11 +9,11 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/urfave/cli/v2"
 
-	"github.com/nlepage/gitoo/reflog"
+	"github.com/nlepage/goo/reflog"
 )
 
 var app = &cli.App{
-	Name:  "gitoo",
+	Name:  "goo",
 	Usage: "visualize the effect of git commands",
 	Action: func(ctx *cli.Context) (err error) {
 		path, err := locateRepository(ctx)
