@@ -85,8 +85,8 @@ func (e *Entry) Parse(s string) error {
 	modifier := ""
 	i := strings.IndexByte(action, ' ')
 	if i != -1 {
-		modifier = action[i+1 : len(action)-1]
-		action = action[:i-1]
+		modifier = action[i+2 : len(action)-1]
+		action = action[:i]
 	}
 
 	s, err = r.ReadString('\n')
