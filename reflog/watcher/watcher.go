@@ -124,6 +124,8 @@ func (w *Watcher) watch() {
 			if !ok {
 				return
 			}
+			log.Printf("%s operation on %s", evt.Op, evt.Name)
+
 			switch {
 			case evt.Has(fsnotify.Create):
 				stat, err := os.Stat(evt.Name)
