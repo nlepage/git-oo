@@ -89,8 +89,8 @@ func (w *Watcher) readLastLines(file string, sendEntries bool) error {
 	}
 
 	prevLastLine := w.lastLine[file]
-	prevIndex := 0
-	for i := len(lines) - 1; i > 0; i-- {
+	prevIndex := -1
+	for i := len(lines) - 1; i >= 0; i-- {
 		if lines[i] == prevLastLine {
 			prevIndex = i
 			break
