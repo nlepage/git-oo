@@ -9,14 +9,13 @@ import (
 )
 
 type Entry struct {
-	Reference string
-	OldHash   string
-	NewHash   string
-	Author    Author
-	Time      time.Time
-	Action    string
-	Modifier  string
-	Message   string
+	OldHash  string
+	NewHash  string
+	Author   Author
+	Time     time.Time
+	Action   string
+	Modifier string
+	Message  string
 }
 
 type Author struct {
