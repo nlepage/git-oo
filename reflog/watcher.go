@@ -1,34 +1,36 @@
-package watcher
+package reflog
 
 import (
 	"bufio"
+	"context"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/nlepage/git-oo/reflog"
 )
 
 const logsDirName = "logs"
 
-type Watcher struct {
+type watcher struct {
+	ctx       context.Context
 	fswatcher *fsnotify.Watcher
-	events    chan *reflog.Event
+	events    chan *Event
 	lastLine  map[string]string
 	logsDir   string
 }
 
-func New(gitDir string) (*Watcher, error) {
+func Watch(ctx context.Context, gitDir string) (<-chan *Event, error) {
 	fswatcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
 
-	events := make(chan *reflog.Event)
+	events := make(chan *Event)
 
-	w := &Watcher{
+	w := &watcher{
+		ctx:       ctx,
 		fswatcher: fswatcher,
 		events:    events,
 		lastLine:  make(map[string]string),
@@ -41,19 +43,15 @@ func New(gitDir string) (*Watcher, error) {
 
 	go w.watch()
 
-	return w, nil
+	return events, nil
 }
 
-func (w *Watcher) Entries() <-chan *reflog.Event {
-	return w.events
-}
-
-func (w *Watcher) Close() error {
+func (w *watcher) close() error {
 	defer close(w.events)
 	return w.fswatcher.Close()
 }
 
-func (w *Watcher) addDir(dir string, sendEvents bool) error {
+func (w *watcher) addDir(dir string, sendEvents bool) error {
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -67,7 +65,7 @@ func (w *Watcher) addDir(dir string, sendEvents bool) error {
 	})
 }
 
-func (w *Watcher) readLastLines(file string, sendEvents bool) error {
+func (w *watcher) readLastLines(file string, sendEvents bool) error {
 	lines := make([]string, 0, 10)
 
 	r, err := os.Open(file)
@@ -106,9 +104,9 @@ func (w *Watcher) readLastLines(file string, sendEvents bool) error {
 		}
 
 		for _, line := range lines[prevIndex+1:] {
-			event := &reflog.Event{
+			event := &Event{
 				Reference: reference,
-				Type:      reflog.NewEntry,
+				Type:      NewEntry,
 			}
 			if err := event.Entry.Parse(line); err != nil {
 				return err
@@ -120,13 +118,10 @@ func (w *Watcher) readLastLines(file string, sendEvents bool) error {
 	return nil
 }
 
-func (w *Watcher) watch() {
+func (w *watcher) watch() {
 	for {
 		select {
-		case evt, ok := <-w.fswatcher.Events:
-			if !ok {
-				return
-			}
+		case evt := <-w.fswatcher.Events:
 			log.Printf("%s operation on file %s", evt.Op, evt.Name)
 
 			switch {
@@ -152,20 +147,22 @@ func (w *Watcher) watch() {
 					log.Println(err)
 					continue
 				}
-				w.events <- &reflog.Event{
+				w.events <- &Event{
 					Reference: reference,
-					Type:      reflog.Remove,
+					Type:      Remove,
 				}
 			}
-		case err, ok := <-w.fswatcher.Errors:
-			if !ok {
-				return
-			}
+		case err := <-w.fswatcher.Errors:
 			log.Println(err)
+		case <-w.ctx.Done():
+			if err := w.close(); err != nil {
+				log.Println(err)
+			}
+			return
 		}
 	}
 }
 
-func (w *Watcher) reference(file string) (string, error) {
+func (w *watcher) reference(file string) (string, error) {
 	return filepath.Rel(w.logsDir, file)
 }
