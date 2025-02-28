@@ -1,4 +1,4 @@
-module github.com/nlepage/goo
+module github.com/nlepage/git-oo
 
 go 1.22.0
 

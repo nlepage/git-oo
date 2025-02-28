@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/nlepage/goo/reflog"
+	"github.com/nlepage/git-oo/reflog"
 )
 
 const logsDirName = "logs"
